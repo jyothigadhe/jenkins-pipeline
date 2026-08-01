@@ -1,4 +1,4 @@
-pipeline {
+ pipeline {
 
     agent any
 
@@ -10,14 +10,14 @@ pipeline {
 
     stages {
 
-        stage('Checkout Code') {
+        stage('Checkout') {
             steps {
                 git branch: 'main',
                 url: 'https://github.com/jyothigadhe/jenkins-pipeline.git'
             }
         }
 
-        stage('Docker Build') {
+        stage('Build Docker Image') {
             steps {
                 sh '''
                 docker build -t $DOCKER_IMAGE .
@@ -47,18 +47,26 @@ pipeline {
         stage('Remove Old Container') {
             steps {
                 sh '''
+                echo "Removing old container..."
+
                 docker rm -f $CONTAINER_NAME 2>/dev/null || true
                 '''
             }
         }
 
-        stage('Deploy New Container') {
+        stage('Deploy') {
             steps {
                 sh '''
+                echo "Starting new container..."
+
                 docker run -d \
                 --name $CONTAINER_NAME \
                 -p 8080:80 \
                 $DOCKER_IMAGE
+
+                echo "Container deployed successfully"
+
+                docker ps
                 '''
             }
         }
@@ -66,11 +74,11 @@ pipeline {
 
     post {
         success {
-            echo "Build and Deployment Successful"
+            echo "Pipeline completed successfully"
         }
 
         failure {
-            echo "Pipeline Failed"
+            echo "Pipeline failed"
         }
     }
 }
