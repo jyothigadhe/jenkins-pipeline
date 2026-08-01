@@ -1,29 +1,72 @@
 pipeline {
+
     agent any
+
+    environment {
+        DOCKER_IMAGE = "gadhe/myapp:latest"
+        DOCKER_CREDENTIALS = "dockerhub-creds"
+        CONTAINER_NAME = "mycontainer"
+    }
 
     stages {
 
-        stage('Build Image') {
+        stage('Checkout Code') {
             steps {
-                sh 'docker build -t gadhe/practice:latest .'
+                git branch: 'main',
+                url: ' https://github.com/jyothigadhe/jenkins-pipeline.git'
             }
         }
 
-        stage('Run Container') {
+        stage('Docker Build') {
             steps {
-                sh 'docker run -d --name myapp -p 80:80 gadhe/practice:latest'
+                sh '''
+                docker build -t $DOCKER_IMAGE .
+                '''
             }
         }
 
-        stage('Push Image') {
+        stage('Docker Login & Push') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
+                withCredentials([usernamePassword(
+                    credentialsId: "${DOCKER_CREDENTIALS}",
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
+                )]) {
+
                     sh '''
-                    echo $PASS | docker login -u $USER --password-stdin
-                    docker push gadhe/practice:latest
+                    echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
+
+                    docker push $DOCKER_IMAGE
+
+                    docker logout
                     '''
                 }
             }
+        }
+
+        stage('Deploy Container') {
+            steps {
+                sh '''
+                docker stop $CONTAINER_NAME || true
+
+                docker rm $CONTAINER_NAME || true
+
+                docker run -d \
+                --name $CONTAINER_NAME \
+                -p 8080:80 \
+                $DOCKER_IMAGE
+                '''
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "Deployment successful"
+        }
+
+        failure {
+            echo "Pipeline failed"
         }
     }
 }
