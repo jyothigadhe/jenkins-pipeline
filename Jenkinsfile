@@ -1,24 +1,28 @@
 pipeline {
     agent any
+
     stages {
-        stage('build') {
+
+        stage('Build Image') {
             steps {
-                echo 'building'
+                sh 'docker build -t gadhe/myapp:latest .'
             }
         }
-        stage('test') {
+
+        stage('Run Container') {
             steps {
-                echo 'test'
+                sh 'docker run -d --name myapp -p 80:80 gadhe/myapp:latest'
             }
         }
-        stage('docker build') {
+
+        stage('Push Image') {
             steps {
-                sh ' docker build -t myapp:latest .'
-            }
-        }
-        stage('deploy') {
-            steps {
-                echo 'diploy'
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
+                    sh '''
+                    echo $PASS | docker login -u $USER --password-stdin
+                    docker push gadhe/myapp:latest
+                    '''
+                }
             }
         }
     }
