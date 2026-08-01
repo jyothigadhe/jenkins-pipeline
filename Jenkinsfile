@@ -5,7 +5,7 @@ pipeline {
 
         stage('Build Image') {
             steps {
-                sh 'docker build -t gadhe/myapp:latest .'
+                sh 'docker build -t gadhe/myapp2:latest .'
             }
         }
 
