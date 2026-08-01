@@ -5,7 +5,7 @@ pipeline {
 
         stage('Build Image') {
             steps {
-                sh 'docker build -t gadhe/myapp2:latest .'
+                sh 'docker build -t gadhe/practice:latest .'
             }
         }
 
@@ -20,7 +20,7 @@ pipeline {
                 withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
                     sh '''
                     echo $PASS | docker login -u $USER --password-stdin
-                    docker push gadhe/myapp:latest
+                    docker push gadhe/practice:latest
                     '''
                 }
             }
