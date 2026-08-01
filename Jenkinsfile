@@ -13,7 +13,7 @@ pipeline {
         stage('Checkout Code') {
             steps {
                 git branch: 'main',
-                url: ' https://github.com/jyothigadhe/jenkins-pipeline.git'
+                url: 'https://github.com/jyothigadhe/jenkins-pipeline.git'
             }
         }
 
@@ -25,7 +25,7 @@ pipeline {
             }
         }
 
-        stage('Docker Login & Push') {
+        stage('Docker Login and Push') {
             steps {
                 withCredentials([usernamePassword(
                     credentialsId: "${DOCKER_CREDENTIALS}",
@@ -44,13 +44,17 @@ pipeline {
             }
         }
 
-        stage('Deploy Container') {
+        stage('Remove Old Container') {
             steps {
                 sh '''
-                docker stop $CONTAINER_NAME || true
+                docker rm -f $CONTAINER_NAME 2>/dev/null || true
+                '''
+            }
+        }
 
-                docker rm $CONTAINER_NAME || true
-
+        stage('Deploy New Container') {
+            steps {
+                sh '''
                 docker run -d \
                 --name $CONTAINER_NAME \
                 -p 8080:80 \
@@ -62,11 +66,11 @@ pipeline {
 
     post {
         success {
-            echo "Deployment successful"
+            echo "Build and Deployment Successful"
         }
 
         failure {
-            echo "Pipeline failed"
+            echo "Pipeline Failed"
         }
     }
 }
