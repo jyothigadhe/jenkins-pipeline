@@ -6,14 +6,15 @@
         DOCKER_IMAGE = "gadhe/myapp:latest"
         DOCKER_CREDENTIALS = "dockerhub-creds"
         CONTAINER_NAME = "mycontainer"
+        PORT = "8081"
     }
 
     stages {
 
-        stage('Checkout') {
+        stage('Checkout Code') {
             steps {
                 git branch: 'main',
-                url: 'https://github.com/jyothigadhe/jenkins-pipeline.git'
+                url: 'https://github.com//jyothigadhe/jenkins-pipeline.git'
             }
         }
 
@@ -25,7 +26,7 @@
             }
         }
 
-        stage('Docker Login and Push') {
+        stage('Login and Push Image') {
             steps {
                 withCredentials([usernamePassword(
                     credentialsId: "${DOCKER_CREDENTIALS}",
@@ -44,27 +45,31 @@
             }
         }
 
-        stage('Remove Old Container') {
+        stage('Clean Old Container') {
             steps {
                 sh '''
                 echo "Removing old container..."
 
-                docker rm -f $CONTAINER_NAME 2>/dev/null || true
+                docker stop $CONTAINER_NAME 2>/dev/null || true
+
+                docker rm $CONTAINER_NAME 2>/dev/null || true
+
+                echo "Old container removed"
                 '''
             }
         }
 
-        stage('Deploy') {
+        stage('Deploy New Container') {
             steps {
                 sh '''
                 echo "Starting new container..."
 
                 docker run -d \
                 --name $CONTAINER_NAME \
-                -p 8081:80 \
+                -p $PORT:80 \
                 $DOCKER_IMAGE
 
-                echo "Container deployed successfully"
+                echo "Deployment completed"
 
                 docker ps
                 '''
@@ -74,11 +79,11 @@
 
     post {
         success {
-            echo "Pipeline completed successfully"
+            echo "Pipeline Successful"
         }
 
         failure {
-            echo "Pipeline failed"
+            echo "Pipeline Failed"
         }
     }
 }
