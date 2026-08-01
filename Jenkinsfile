@@ -11,6 +11,11 @@ pipeline {
                 echo 'test'
             }
         }
+        stage('docker build') {
+            steps {
+                sh 'docker build -t myapp:latest'
+            }
+        }
         stage('deploy') {
             steps {
                 echo 'diploy'
@@ -18,4 +23,3 @@ pipeline {
         }
     }
 }
-    
